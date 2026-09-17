@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Navbar } from '../components/Navbar';
 import { Button } from '../components/ui/Button';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
+import { SubscriptionFlow } from '../components/SubscriptionFlow';
 
 function SkeletonCard() {
   return (
@@ -42,6 +43,7 @@ export function UserDashboard() {
   const [winnings, setWinnings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showSubscriptionFlow, setShowSubscriptionFlow] = useState(false);
 
   // Score form state
   const [scoreForm, setScoreForm] = useState({ stableford: '', score_date: new Date().toISOString().split('T')[0], notes: '' });
@@ -66,6 +68,10 @@ export function UserDashboard() {
       setScores(scoresRes.data.data || []);
       setDrawEntries(drawRes.data.data || []);
       setWinnings(winningsRes.data.data || []);
+
+      if (!profileRes.data.data?.subscription || profileRes.data.data.subscription.status !== 'active') {
+        setShowSubscriptionFlow(true);
+      }
     } catch (err) {
       console.error('Dashboard fetch error:', err);
       setError('Failed to load some dashboard data. Please refresh.');
@@ -125,7 +131,7 @@ export function UserDashboard() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
-      <div className="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
         {/* Welcome Banner */}
         <motion.div
@@ -209,7 +215,7 @@ export function UserDashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
 
           {/* Score Entry + History */}
-          <div className="card">
+          <div className="card relative">
             <h3 className="text-lg font-display font-bold text-text mb-5 flex items-center gap-2">
               ⛳ Golf Scores <span className="text-xs text-muted-text font-normal">(Rolling 5-Score Stableford)</span>
             </h3>
@@ -275,6 +281,16 @@ export function UserDashboard() {
                 {scores.length > 5 && (
                   <p className="text-xs text-muted-text text-center">Showing 5 most recent of {scores.length} total</p>
                 )}
+              </div>
+            )}
+
+            {/* Blur overlay if not active */}
+            {(!profile?.subscription || profile.subscription.status !== 'active') && (
+              <div className="absolute inset-0 bg-white/70 backdrop-blur-[2px] z-10 flex flex-col items-center justify-center rounded-xl border border-border">
+                <p className="text-primary font-bold mb-2">Subscription Required</p>
+                <Button onClick={() => setShowSubscriptionFlow(true)} variant="primary" className="text-sm">
+                  Choose a Plan
+                </Button>
               </div>
             )}
           </div>
@@ -358,8 +374,19 @@ export function UserDashboard() {
             )}
           </div>
         </div>
-      </div>
+      </main>
+
+      <AnimatePresence>
+        {showSubscriptionFlow && (
+          <SubscriptionFlow 
+            onSuccess={() => {
+              setShowSubscriptionFlow(false);
+              fetchAll();
+            }}
+            onCancel={profile?.subscription?.status === 'active' ? () => setShowSubscriptionFlow(false) : undefined}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
-

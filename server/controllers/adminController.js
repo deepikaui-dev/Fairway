@@ -169,3 +169,32 @@ export const updateWinnerStatus = asyncHandler(async (req, res) => {
 
   res.json({ success: true, data: result.rows[0] });
 });
+
+// PUT /api/admin/users/:id/subscription — update a user's subscription
+export const updateUserSubscription = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { plan, status } = req.body;
+
+  if (!plan || !['monthly', 'yearly'].includes(plan)) {
+    return res.status(400).json({ success: false, message: 'Plan must be monthly or yearly' });
+  }
+
+  if (!status || !['active', 'inactive', 'cancelled'].includes(status)) {
+    return res.status(400).json({ success: false, message: 'Status must be active, inactive, or cancelled' });
+  }
+
+  const monthlyAmount = plan === 'monthly' ? 25000 : 20833;
+  const renewalDate = new Date();
+  renewalDate.setMonth(renewalDate.getMonth() + (plan === 'monthly' ? 1 : 12));
+
+  const result = await query(
+    `INSERT INTO subscriptions (user_id, plan, status, renewal_date, monthly_amount_cents)
+     VALUES ($1, $2, $3, $4, $5)
+     ON CONFLICT (user_id)
+     DO UPDATE SET plan = $2, status = $3, renewal_date = $4, monthly_amount_cents = $5
+     RETURNING *`,
+    [id, plan, status, renewalDate, monthlyAmount]
+  );
+
+  res.json({ success: true, data: result.rows[0] });
+});

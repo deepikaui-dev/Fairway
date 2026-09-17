@@ -4,7 +4,8 @@ import {
   getUsers, 
   createCharity, updateCharity, 
   createDraw, runDrawSimulation, publishDraw,
-  getWinners, updateWinnerStatus
+  getWinners, updateWinnerStatus,
+  updateUserSubscription
 } from '../controllers/adminController.js';
 import { protect, admin } from '../middlewares/authMiddleware.js';
 
@@ -15,6 +16,7 @@ router.use(protect, admin);
 
 router.get('/stats', getAdminStats);
 router.get('/users', getUsers);
+router.put('/users/:id/subscription', updateUserSubscription);
 
 router.post('/charities', createCharity);
 router.put('/charities/:id', updateCharity);
