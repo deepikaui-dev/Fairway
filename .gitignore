@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+client/node_modules/
+server/node_modules/
+
+# Production builds
+dist/
+build/
+client/dist/
+
+# Environment variables & secrets
+.env
+.env.*
+!.env.example
+client/.env
+server/.env
+server/.env.local
+
+# Logs
+*.log
+logs/
+
+# Temporary / Scratch scripts
+server/database/fix_admin.js
+
+# OS / Editor metadata
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Internal Project Docs
+instructions.md
+guidelines.md
